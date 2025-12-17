@@ -1,3 +1,18 @@
+# -*- coding: utf-8 -*-
+"""
+-------------------------------------------------
+   Project:   GlobalTrade Monitor
+   File:      main.py
+   Author:    [Wenxuan Li/Patrickli]
+   Date:      2025-12-18
+   Description:
+      Main entry point for the FastAPI application.
+      Handles routing, dependency injection, and app lifecycle.
+-------------------------------------------------
+   Copyright (c) 2025 [Wenxuan Li]. All rights reserved.
+-------------------------------------------------
+"""
+
 from datetime import datetime
 from typing import Optional
 from sqlmodel import Field, SQLModel
