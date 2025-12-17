@@ -8,7 +8,7 @@
     var pChart = echarts.init(pDom);
     var pOption = {
         tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
-        legend: { data: ['预估利润率', '汇率波动指数'], bottom: 0 },
+        legend: { data: ['{{ t.chart_profit_rate }}', '{{ t.chart_rate_index }}'], bottom: 0 },
         grid: { left: '3%', right: '3%', bottom: '10%', top: '15%', containLabel: true },
         xAxis: { 
             type: 'category', 
@@ -18,14 +18,14 @@
         yAxis: [
             {
                 type: 'value',
-                name: '利润率 (%)',
+                name: '{{ t.chart_profit_rate }}',
                 position: 'left',
                 axisLabel: { formatter: '{value} %', color: '#10b981' },
                 splitLine: { show: true, lineStyle: { type: 'dashed' } }
             },
             {
                 type: 'value',
-                name: '汇率指数',
+                name: '{{ t.chart_rate_index }}',
                 position: 'right',
                 min: 'dataMin',
                 max: 'dataMax',
@@ -35,7 +35,7 @@
         ],
         series: [
             {
-                name: '预估利润率',
+                name: '{{ t.chart_profit_rate }}',  
                 type: 'line',
                 smooth: true,
                 yAxisIndex: 0,
@@ -50,7 +50,7 @@
                 }
             },
             {
-                name: '汇率波动指数',
+                name: '{{ t.chart_rate_index }}',
                 type: 'line',
                 smooth: true,
                 yAxisIndex: 1,

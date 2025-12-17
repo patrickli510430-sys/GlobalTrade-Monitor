@@ -1,111 +1,160 @@
-<div class="flex flex-col lg:flex-row gap-6 h-full items-stretch">
+<div class="grid grid-cols-12 gap-8 animate-[fadeIn_0.5s_ease-out]" x-data="{ showDetailModal: false }">
     
-    <!-- Left: 全球总资产 -->
-    <div class="flex-1 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden group">
-        <div class="absolute right-0 top-0 w-64 h-64 bg-blue-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-pulse"></div>
+    <!-- 1. 总资产卡片 -->
+    <div class="col-span-12 lg:col-span-6 glass-card rounded-[2rem] p-10 relative overflow-hidden group bg-white/80">
+         
+         <div class="flex justify-between items-start mb-6">
+            <div class="text-slate-400 font-bold text-xs uppercase tracking-[0.15em]">{{ t.portfolio_value }}</div>
+            
+            <!-- 🟣 右上角可视化按钮 (完善版) -->
+            <button @click="showDetailModal = true; setTimeout(() => initDetailCharts(), 100)" 
+                    class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 hover:scale-110 hover:shadow-indigo-400 transition-all duration-300 z-20 cursor-pointer group-btn">
+                <i class="fa-solid fa-chart-simple text-xl group-hover:scale-110 transition-transform"></i>
+            </button>
+         </div>
+         
+         <div class="flex items-baseline gap-2 mb-4">
+             <span class="text-2xl font-bold text-slate-400">¥</span>
+             <span class="text-6xl font-black text-slate-900 tracking-tighter">
+                 {{ "{:,.0f}".format(total_value) }}
+             </span>
+         </div>
+         
+         <div class="flex items-center gap-2 text-emerald-500 font-bold text-sm bg-emerald-50 w-fit px-3 py-1 rounded-full italic border border-emerald-100">
+             <i class="fa-solid fa-arrow-trend-up"></i> {{ t.analysis_ready }}
+         </div>
+
+         <!-- 装饰背景 -->
+         <div class="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+             <i class="fa-solid fa-sack-dollar text-9xl"></i>
+         </div>
+    </div>
+
+    <!-- 2. 汇率 Widget (保持不变，但使用 t.live_rates) -->
+    <div class="col-span-12 lg:col-span-6 glass-card rounded-[2rem] p-10 bg-white/80 flex flex-col relative overflow-hidden"
+         x-data="{ activeCurr: 'USD', rates: { {% for c,r in rates.items() %}'{{c}}':{{r}},{% endfor %} } }">
+         <div class="flex justify-between items-start mb-8 z-10 relative">
+            <div class="text-slate-400 font-bold text-xs uppercase tracking-[0.15em]">{{ t.live_rates }}</div>
+            <div class="flex gap-2">
+                <template x-for="curr in ['USD', 'EUR', 'JPY', 'GBP']">
+                    <button @click="activeCurr = curr" class="px-3 py-1 rounded-lg text-[10px] font-black transition-all" :class="activeCurr === curr ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'">
+                        <span x-text="curr"></span>
+                    </button>
+                </template>
+            </div>
+         </div>
+         <div class="mt-auto z-10 relative">
+             <div class="flex items-end gap-3 mb-2">
+                 <span class="text-6xl font-black text-slate-900 tracking-tighter" x-text="rates[activeCurr]"></span>
+                 <span class="text-xl font-bold text-slate-400 mb-2">CNY</span>
+             </div>
+         </div>
+         <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+    </div>
+
+    <!-- 🟢 模态框 (详细分析) -->
+    <div x-show="showDetailModal" style="display: none;" 
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4">
         
-        <div class="relative z-10 flex flex-col justify-between h-full">
-            <div>
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-                        <i class="fa-solid fa-earth-americas text-blue-300"></i>
-                    </div>
-                    <span class="text-sm font-bold text-slate-300 tracking-widest uppercase">Global Inventory Value</span>
+        <!-- 背景遮罩 -->
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-md" @click="showDetailModal = false"></div>
+        
+        <!-- 模态框内容 -->
+        <div class="relative bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl p-10 animate-[zoomIn_0.3s_ease-out] overflow-hidden">
+            
+            <!-- 标题栏 -->
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Deep Dive</div>
+                    <h2 class="text-3xl font-black text-slate-900 tracking-tight">{{ t.modal_title }}</h2>
                 </div>
-                
-                <div class="flex items-baseline gap-2">
-                    <span class="text-2xl font-medium text-slate-400">¥</span>
-                    <h1 class="text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                        {{ "{:,.2f}".format(total_value) }}
-                    </h1>
+                <button @click="showDetailModal = false" class="p-3 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- 饼图：品类占比 -->
+                <div class="md:col-span-1 bg-slate-50 rounded-[2rem] p-6">
+                    <h4 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-indigo-500"></i> {{ t.modal_cat }}
+                    </h4>
+                    <div id="modalPieChart" class="w-full h-[250px]"></div>
+                </div>
+
+                <!-- 折线图：资产趋势 -->
+                <div class="md:col-span-2 bg-slate-50 rounded-[2rem] p-6">
+                    <h4 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-trend-up text-emerald-500"></i> {{ t.modal_trend }} (CNY)
+                    </h4>
+                    <div id="modalLineChart" class="w-full h-[250px]"></div>
                 </div>
             </div>
             
-            <div class="mt-6 flex items-center gap-4 text-xs text-slate-400 border-t border-white/10 pt-4">
-                <div class="flex items-center gap-2">
-                    <span class="relative flex h-2 w-2">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    实时汇率折算
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Right: 智能汇率窗口 (Bug 修复版) -->
-    <!-- 
-         🔴 关键修复：手动构建 JS 对象 
-         rates: { 'USD': 7.05, 'EUR': 8.12, ... }
-    -->
-    <div x-data="{ 
-            viewMode: 'mini', 
-            selectedCurrency: 'USD',
-            rates: { 
-                {% for code, rate in rates.items() %}
-                    '{{ code }}': {{ rate }},
-                {% endfor %}
-            } 
-         }" 
-         class="lg:w-[380px] bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col transition-all duration-300 relative overflow-hidden">
-        
-        <!-- Header -->
-        <div class="px-5 py-3 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-            <span class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                <i class="fa-solid fa-money-bill-transfer"></i> 汇率监控
-            </span>
-            <button @click="viewMode = (viewMode === 'mini' ? 'grid' : 'mini')" 
-                    class="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors">
-                <span x-text="viewMode === 'mini' ? '展开全部' : '收起'"></span>
-                <i class="fa-solid ml-1" :class="viewMode === 'mini' ? 'fa-expand' : 'fa-compress'"></i>
-            </button>
-        </div>
-
-        <!-- Mode A: Mini View -->
-        <div x-show="viewMode === 'mini'" class="flex-1 p-6 flex flex-col justify-center relative">
-            <!-- Arrows -->
-            <div class="absolute inset-y-0 left-2 flex items-center">
-                <button class="p-2 text-slate-300 hover:text-blue-500" 
-                        @click="const keys = Object.keys(rates); const idx = keys.indexOf(selectedCurrency); selectedCurrency = keys[(idx - 1 + keys.length) % keys.length]">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-            </div>
-            <div class="absolute inset-y-0 right-2 flex items-center">
-                <button class="p-2 text-slate-300 hover:text-blue-500" 
-                         @click="const keys = Object.keys(rates); const idx = keys.indexOf(selectedCurrency); selectedCurrency = keys[(idx + 1) % keys.length]">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>
-            </div>
-
-            <div class="text-center">
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 text-xl mb-3 shadow-inner">
-                    <i class="fa-solid" :class="{
-                           'fa-dollar-sign': selectedCurrency === 'USD',
-                           'fa-euro-sign': selectedCurrency === 'EUR',
-                           'fa-yen-sign': selectedCurrency === 'JPY',
-                           'fa-sterling-sign': selectedCurrency === 'GBP'
-                       }"></i>
-                </div>
-                <!-- 防止 undefined 报错，加个判断 -->
-                <h2 class="text-4xl font-bold text-slate-800 tracking-tight" x-text="rates[selectedCurrency] || '-'"></h2>
-                <p class="text-sm text-slate-400 mt-2 font-medium">
-                    100 <span x-text="selectedCurrency"></span> ≈ 
-                    <span x-text="rates[selectedCurrency] ? (rates[selectedCurrency] * 100).toFixed(1) : '-'" class="text-slate-600 font-bold"></span> CNY
-                </p>
-            </div>
-        </div>
-
-        <!-- Mode B: Grid View -->
-        <div x-show="viewMode === 'grid'" style="display: none;" class="flex-1 p-4 overflow-y-auto">
-            <div class="grid grid-cols-2 gap-3">
-                <template x-for="(rate, code) in rates" :key="code">
-                    <div @click="selectedCurrency = code; viewMode = 'mini'" 
-                         class="p-3 rounded-lg border border-slate-100 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all text-center group">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase" x-text="code"></div>
-                        <div class="text-lg font-bold text-slate-700 group-hover:text-blue-600" x-text="rate"></div>
+            <!-- 底部数据栏 -->
+            <div class="mt-8 flex gap-4">
+                <div class="flex-1 bg-indigo-600 text-white p-6 rounded-[2rem] flex justify-between items-center shadow-xl shadow-indigo-200">
+                    <div>
+                        <div class="text-[10px] font-black uppercase opacity-60">Total Asset</div>
+                        <div class="text-3xl font-black">¥ {{ "{:,.0f}".format(total_value) }}</div>
                     </div>
-                </template>
+                    <i class="fa-solid fa-wallet text-3xl opacity-50"></i>
+                </div>
+                <div class="flex-1 bg-white border border-slate-200 text-slate-900 p-6 rounded-[2rem] flex justify-between items-center">
+                    <div>
+                        <div class="text-[10px] font-black uppercase text-slate-400">Total Items</div>
+                        <div class="text-3xl font-black">1,248</div>
+                    </div>
+                    <i class="fa-solid fa-boxes-stacked text-3xl text-slate-200"></i>
+                </div>
             </div>
+
         </div>
     </div>
 </div>
+
+<script>
+    // 在模态框打开时初始化图表
+    function initDetailCharts() {
+        // 1. 饼图
+        var pieDom = document.getElementById('modalPieChart');
+        if (echarts.getInstanceByDom(pieDom)) { echarts.getInstanceByDom(pieDom).dispose(); }
+        var pieChart = echarts.init(pieDom);
+        pieChart.setOption({
+            color: ['#6366f1', '#a855f7', '#ec4899', '#f97316'],
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie', radius: ['40%', '70%'], 
+                itemStyle: { borderRadius: 10, borderColor: '#f8fafc', borderWidth: 2 },
+                label: { show: false },
+                data: [
+                    { value: 1048, name: '{{ t.modal_elec }}' },
+                    { value: 735, name: '{{ t.modal_fashion }}' },
+                    { value: 580, name: '{{ t.modal_home }}' },
+                    { value: 484, name: '{{ t.modal_beauty }}' }
+                ]
+            }]
+        });
+
+        // 2. 趋势图
+        var lineDom = document.getElementById('modalLineChart');
+        if (echarts.getInstanceByDom(lineDom)) { echarts.getInstanceByDom(lineDom).dispose(); }
+        var lineChart = echarts.init(lineDom);
+        lineChart.setOption({
+            grid: { top: 10, right: 10, bottom: 20, left: 40 },
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: ['W1', 'W2', 'W3', 'W4'], axisLine: { show: false } },
+            yAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed' } } },
+            series: [{
+                data: [{{ total_value * 0.9 }}, {{ total_value * 0.95 }}, {{ total_value * 0.92 }}, {{ total_value }}],
+                type: 'line', smooth: true, 
+                lineStyle: { color: '#10b981', width: 4 },
+                areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{offset: 0, color: '#10b98166'}, {offset: 1, color: '#10b98100'}]) }
+            }]
+        });
+        
+        // Resize
+        window.addEventListener('resize', () => { pieChart.resize(); lineChart.resize(); });
+    }
+</script>

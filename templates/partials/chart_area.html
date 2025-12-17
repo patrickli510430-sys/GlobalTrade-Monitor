@@ -7,6 +7,8 @@
     var isLine = '{{ chart_type }}' === 'line';
     
     var option = {
+        text: '{{ title }}', 
+        subtext: '{{ subtext }}',
         // 移除默认标题，改用 HTML 的 Header
         grid: { left: '2%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
         tooltip: { 
@@ -30,7 +32,7 @@
             axisLabel: { color: '#94a3b8' }
         },
         series: [{
-            name: '库存量',
+            name: '{{ t.chart_trend_sub if t else 'Trend' }}',
             data: {{ values | safe }},
             type: '{{ chart_type }}',
             smooth: true,

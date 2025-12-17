@@ -28,11 +28,11 @@
                 itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.2)' }
             },
             data: [
-                { value: {{ asset_map['USD']|round(2) }}, name: 'USD 资产' },
-                { value: {{ asset_map['EUR']|round(2) }}, name: 'EUR 资产' },
-                { value: {{ asset_map['JPY']|round(2) }}, name: 'JPY 资产' },
-                { value: {{ asset_map['GBP']|round(2) }}, name: 'GBP 资产' },
-                { value: {{ asset_map['Other']|round(2) }}, name: '其他' }
+                { value: {{ asset_map['USD']|round(2) }}, name: '{{ t.pie_usd }}' },
+                { value: {{ asset_map['EUR']|round(2) }}, name: '{{ t.pie_eur }}' },
+                { value: {{ asset_map['JPY']|round(2) }}, name: '{{ t.pie_jpy }}' },
+                { value: {{ asset_map['GBP']|round(2) }}, name: '{{ t.pie_gbp }}' },
+                { value: {{ asset_map['Other']|round(2) }}, name: '{{ t.pie_other }}' }
             ].filter(item => item.value > 0) // 过滤掉 0 的数据，避免图表难看
         }]
     };

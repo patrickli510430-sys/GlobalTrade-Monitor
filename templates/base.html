@@ -3,104 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GlobalTrade Monitor | 智能跨境看板</title>
-    <link rel="icon" href="data:,">
+    <title>GlobalTrade Flux | 智能跨境看板</title>
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <!-- Alpine.js (用于轻量级前端交互，如模态框、菜单) -->
+    <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <!-- ECharts -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 (漂亮的弹窗) -->
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <!-- 自定义样式 -->
     <style>
         [x-cloak] { display: none !important; }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+        
+        /* 滚动条动画 */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            animation: marquee 30s linear infinite;
+        }
+
+        /* 毛玻璃卡片基类 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        
+        body {
+            background-color: #fbfbfd; /* Apple style background */
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-slate-800 font-sans antialiased" x-data="{ sidebarOpen: true }">
+<body class="text-slate-900 antialiased h-screen flex flex-col overflow-hidden" x-data="{ sidebarOpen: true }">
 
-    <!-- 侧边栏 Sidebar -->
-    <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out shadow-xl"
-           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-        
-        <!-- Logo -->
-        <div class="flex items-center justify-center h-16 bg-slate-800 shadow-md">
-            <div class="flex items-center gap-2 font-bold text-xl tracking-wider">
-                <i class="fa-solid fa-globe text-blue-400"></i>
-                <span>G-Trade<span class="text-blue-400">Monitor</span></span>
+    <!-- 1. 顶部 Ticker (股市风格滚动条) -->
+    <div class="w-full bg-black text-white h-10 flex items-center overflow-hidden font-mono text-xs relative shrink-0 z-50">
+        <div class="absolute left-0 top-0 bottom-0 bg-indigo-600 px-4 flex items-center z-10 font-black italic tracking-tighter">
+            LIVE DATA
+        </div>
+        <!-- HTMX 每60秒更新汇率滚动条 -->
+        <div hx-get="/api/ticker" hx-trigger="load, every 60s" hx-swap="innerHTML" class="flex w-full">
+            <!-- 占位符 -->
+            <div class="flex animate-marquee whitespace-nowrap gap-16 pl-32 items-center">
+                <span>Loading market data...</span>
             </div>
         </div>
+    </div>
 
-        <!-- Menu -->
-        <nav class="mt-6 px-4 space-y-2">
-            <a href="/" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 
-               {{ 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' if request.url.path == '/' else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
-                <i class="fa-solid fa-chart-line w-6"></i>
-                <span class="font-medium">监控看板 (Dashboard)</span>
-            </a>
-            
-            <a href="/inventory" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 
-               {{ 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' if request.url.path == '/inventory' else 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
-                <i class="fa-solid fa-boxes-stacked w-6"></i>
-                <span class="font-medium">库存管理 (Inventory)</span>
-            </a>
-
-            <div class="pt-4 mt-4 border-t border-slate-700">
-                <p class="px-4 text-xs font-semibold text-slate-500 uppercase">System</p>
-                <a href="/settings" class="flex items-center px-4 py-3 mt-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
-                    <i class="fa-solid fa-gear w-6"></i>
-                    <span>系统设置</span>
-                </a>
-            </div>
-        </nav>
-    </aside>
-
-    <!-- 主内容区 -->
-    <div class="flex-1 flex flex-col transition-all duration-300 ease-in-out"
-         :class="sidebarOpen ? 'ml-64' : 'ml-0'">
+    <div class="flex flex-1 overflow-hidden relative">
         
-        <!-- 顶部栏 Header -->
-        <header class="h-16 glass-effect border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-40">
-            <button @click="sidebarOpen = !sidebarOpen" class="text-slate-500 hover:text-blue-600 transition">
-                <i class="fa-solid fa-bars text-xl"></i>
+        <!-- 2. 现代侧边栏 Sidebar -->
+        <aside class="w-72 bg-white/40 backdrop-blur-3xl border-r border-slate-200/50 p-8 flex flex-col gap-8 h-full shrink-0 transition-transform duration-300 absolute md:relative z-40"
+               :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
+            
+            <!-- Logo -->
+            <div class="flex items-center gap-3 px-2">
+                <div class="bg-black w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-slate-200">
+                    <i class="fa-solid fa-globe text-lg"></i>
+                </div>
+                <span class="font-black text-2xl tracking-tighter uppercase italic">Flux</span>
+            </div>
+
+            <!-- Menu -->
+            <nav class="flex flex-col gap-3">
+                <a href="/" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl transition-all group {{ 'bg-black text-white shadow-2xl' if request.url.path == '/' else 'text-slate-500 hover:bg-white hover:shadow-lg' }}">
+                    <i class="fa-solid fa-chart-line w-5 text-center"></i> 
+                    <span class="font-bold">{{ t.nav_dashboard if t else 'Cockpit' }}</span>
+                </a>
+                
+                <a href="/inventory" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl transition-all group {{ 'bg-black text-white shadow-2xl' if request.url.path == '/inventory' else 'text-slate-500 hover:bg-white hover:shadow-lg' }}">
+                    <i class="fa-solid fa-box-open w-5 text-center"></i> 
+                    <span class="font-bold">{{ t.nav_inventory if t else 'Inventory' }}</span>
+                </a>
+                
+                <a href="/settings" class="w-full flex items-center gap-3 px-5 py-4 rounded-2xl transition-all group {{ 'bg-black text-white shadow-2xl' if request.url.path == '/settings' else 'text-slate-500 hover:bg-white hover:shadow-lg' }}">
+                    <i class="fa-solid fa-gear w-5 text-center"></i> 
+                    <span class="font-bold">{{ t.nav_settings if t else 'Settings' }}</span>
+                </a>
+            </nav>
+
+            <!-- Bottom Card -->
+            <div class="mt-auto">
+                <!-- 语言切换按钮 -->
+                <a href="/api/set-lang/{{ 'en' if current_lang == 'zh' else 'zh' }}" 
+                class="flex items-center justify-center gap-2 py-3 bg-slate-100 rounded-2xl font-bold text-slate-600 hover:bg-slate-200 transition-all active:scale-95 text-xs uppercase tracking-wider">
+                    <i class="fa-solid fa-language text-lg"></i> 
+                    {{ t.switch_lang if t else 'Switch Language' }}
+                </a>
+                <div class="p-6 rounded-[2rem] bg-indigo-600 text-white shadow-2xl shadow-indigo-200 relative overflow-hidden group cursor-pointer hover:scale-105 transition-transform">
+                    <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <i class="fa-solid fa-arrow-trend-up text-6xl"></i>
+                    </div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-indigo-200 mb-2">System Status</div>
+                    <div class="text-lg font-bold flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div> Online
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 3. 主内容区 -->
+        <main class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth bg-slate-50/30 relative">
+            <!-- Mobile Toggle -->
+            <button @click="sidebarOpen = !sidebarOpen" class="md:hidden absolute top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg">
+                <i class="fa-solid fa-bars"></i>
             </button>
 
-            <div class="flex items-center gap-4">
-                <div class="text-right hidden md:block">
-                    <p class="text-sm font-bold text-slate-700">Admin User</p>
-                    <p class="text-xs text-slate-500">超级管理员</p>
-                </div>
-                <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg">
-                    A
-                </div>
+            <div class="max-w-[1600px] mx-auto w-full p-8 md:p-12">
+                {% block content %}{% endblock %}
             </div>
-        </header>
-
-        <!-- 内容插槽 -->
-        <main class="p-6 overflow-y-auto">
-            {% block content %}{% endblock %}
         </main>
     </div>
 
+    <!-- 全局 Toast 提示 -->
     <script>
-        // HTMX 全局事件：处理请求后的 Toast 提示
         document.body.addEventListener('htmx:afterSwap', function(evt) {
-            // 如果是删除操作或添加操作，给个提示
-            if (evt.detail.target.id === "inventoryTableBody" || evt.detail.target.id.includes("row-")) {
+            if (evt.detail.xhr.status === 200 && evt.detail.target.id.includes("row-")) {
                 const Toast = Swal.mixin({
-                    toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
-                    timerProgressBar: true,
+                    toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3000,
+                    customClass: { popup: 'rounded-2xl shadow-2xl border border-slate-100' }
                 });
-                Toast.fire({ icon: 'success', title: '操作成功' });
+                Toast.fire({ icon: 'success', title: 'Operation completed' });
             }
         });
     </script>
