@@ -43,7 +43,13 @@
 
 本项目采用 **Server-Driven UI (服务端驱动 UI)** 架构，摒弃了繁重的前端构建流程，实现了极致的开发效率与页面加载速度。
 
-### 1. 技术栈一览
+### 1. 交互时序图
+![Interaction Flow](photos/architecture_flow.png.png)
+
+### 2. 数据库设计
+![ER Diagram](photos/er_diagram.png)
+
+### 3. 技术栈一览
 
 | 模块 | 技术选型 | 说明 |
 | :--- | :--- | :--- |
@@ -54,7 +60,7 @@
 | **UI 设计** | **Tailwind CSS** | 原子化 CSS 框架，构建现代、响应式的 SaaS 界面。 |
 | **数据可视化** | **Apache ECharts** | 商业级图表库，实现动态折线图、双轴图、饼图。 |
 
-### 2. 系统架构图
+### 4. 系统架构图
 
 ```mermaid
 graph TD
@@ -74,7 +80,7 @@ graph TD
     Jinja2 -->|生成 HTML| User
 ```
 
-### 3. 核心业务流程：汇率兜底机制
+### 5. 核心业务流程：汇率兜底机制
 
 ```mermaid
 flowchart LR
