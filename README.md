@@ -47,7 +47,7 @@
 ![Interaction Flow](photos/architecture_flow.png.png)
 
 ### 2. 数据库设计
-![ER Diagram](photos/database_schema.png)
+![ER Diagram](photos/er_diagram.png)
 
 ### 3. 技术栈一览
 
