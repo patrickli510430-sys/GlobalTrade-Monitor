@@ -1,9 +1,3 @@
-这是一份经过深度润色、符合商业级交付标准的 `README.md`。它不仅涵盖了所有功能模块（包括最新的利润分析、系统备份），还内置了专业的 Mermaid 架构图。
-
-请将以下内容保存为项目根目录下的 `README.md` 文件。
-
----
-
 # 🌍 GlobalTrade Monitor | 跨境电商智能库存与汇率监控看板
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)
