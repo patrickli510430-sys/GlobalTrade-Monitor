@@ -44,7 +44,7 @@
 本项目采用 **Server-Driven UI (服务端驱动 UI)** 架构，摒弃了繁重的前端构建流程，实现了极致的开发效率与页面加载速度。
 
 ### 1. 交互时序图
-![Interaction Flow](photos/architecture_flow.png)
+![Interaction Flow](photos/architecture_flow.png.png)
 
 ### 2. 数据库设计
 ![ER Diagram](photos/database_schema.png)
