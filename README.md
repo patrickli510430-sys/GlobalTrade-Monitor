@@ -161,4 +161,3 @@ GlobalTradeMonitor/
 
 ## 📄 版权说明
 本应用仅供**《商业应用程序开发》**课程作业展示使用。
-MIT License.
