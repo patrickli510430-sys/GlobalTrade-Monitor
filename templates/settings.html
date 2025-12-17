@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6" x-data="{ currentTab: 'general', showUserModal: false }">
+    
+    <!-- 顶部标题 -->
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800">系统设置</h2>
+        <p class="text-slate-500 text-sm">管理您的账户安全与数据资产</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        
+        <!-- 1. 左侧导航菜单 -->
+        <div class="md:col-span-1 space-y-2">
+            <!-- 通用设置 Tab -->
+            <button @click="currentTab = 'general'"
+                    class="w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-3"
+                    :class="currentTab === 'general' ? 'bg-white border-l-4 border-blue-500 shadow-sm text-blue-600' : 'text-slate-500 hover:bg-white hover:text-slate-700'">
+                <i class="fa-solid fa-sliders w-5"></i> 通用设置
+            </button>
+            
+            <!-- 账号管理 Tab -->
+            <button @click="currentTab = 'users'"
+                    class="w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-3"
+                    :class="currentTab === 'users' ? 'bg-white border-l-4 border-blue-500 shadow-sm text-blue-600' : 'text-slate-500 hover:bg-white hover:text-slate-700'">
+                <i class="fa-solid fa-users-gear w-5"></i> 账号管理
+            </button>
+            
+            <!-- 数据备份 Tab -->
+            <button @click="currentTab = 'backup'"
+                    class="w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-3"
+                    :class="currentTab === 'backup' ? 'bg-white border-l-4 border-blue-500 shadow-sm text-blue-600' : 'text-slate-500 hover:bg-white hover:text-slate-700'">
+                <i class="fa-solid fa-database w-5"></i> 数据备份
+            </button>
+        </div>
+
+        <!-- 2. 右侧内容区域 -->
+        <div class="md:col-span-3 bg-white rounded-xl shadow-sm border border-slate-100 p-8 min-h-[500px]">
+            
+            <!-- ================= Tab 1: 通用设置 ================= -->
+            <div x-show="currentTab === 'general'" x-transition:enter.duration.300ms>
+                <h3 class="text-lg font-bold text-slate-800 mb-6 border-b pb-4">系统偏好</h3>
+                <form hx-post="/settings/update" hx-swap="outerHTML" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">系统本位币</label>
+                            <select name="base_currency" class="w-full border-slate-200 rounded-lg text-slate-600 focus:ring-blue-500 p-2.5">
+                                <option value="CNY" selected>CNY (人民币)</option>
+                                <option value="USD">USD (美元)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">库存预警阈值</label>
+                            <input type="number" name="default_safe_stock" value="10" class="w-full border-slate-200 rounded-lg p-2.5">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                        <div>
+                            <span class="block text-sm font-medium text-slate-700">自动汇率更新</span>
+                            <span class="text-xs text-slate-400">每小时同步 ExchangeRate-API</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" checked class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="button" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">
+                            保存更改
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ================= Tab 2: 账号管理 ================= -->
+            <div x-show="currentTab === 'users'" style="display: none;" x-transition:enter.duration.300ms>
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h3 class="text-lg font-bold text-slate-800">团队成员</h3>
+                    <button @click="showUserModal = true" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-4 py-2 rounded-lg text-sm font-medium transition">
+                        <i class="fa-solid fa-user-plus mr-1"></i> 添加成员
+                    </button>
+                </div>
+
+                <!-- 用户列表表格 -->
+                <div class="overflow-hidden rounded-lg border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">用户</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">角色</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">状态</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200">
+                            {% for user in users %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap flex items-center gap-3">
+                                    <div class="h-8 w-8 rounded-full bg-gradient-to-tr from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold">
+                                        {{ user.username[:1].upper() }}
+                                    </div>
+                                    <span class="text-sm font-medium text-slate-900">{{ user.username }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">管理员</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        活跃
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button hx-delete="/settings/users/{{ user.id }}" 
+                                            hx-confirm="确定删除该用户吗？" 
+                                            hx-target="closest tr" 
+                                            hx-swap="outerHTML"
+                                            class="text-red-400 hover:text-red-600">
+                                        删除
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 添加用户 Modal (使用 Alpine 控制) -->
+                <div x-show="showUserModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center">
+                    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showUserModal = false"></div>
+                    <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm z-10 relative">
+                        <h3 class="text-lg font-bold mb-4">新增用户</h3>
+                        <form hx-post="/settings/users/add">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 uppercase mb-1">用户名</label>
+                                    <input type="text" name="username" required class="w-full border-slate-200 rounded-lg p-2">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-500 uppercase mb-1">初始密码</label>
+                                    <input type="password" name="password" required class="w-full border-slate-200 rounded-lg p-2">
+                                </div>
+                            </div>
+                            <div class="mt-6 flex justify-end gap-3">
+                                <button type="button" @click="showUserModal = false" class="text-slate-500 hover:text-slate-700 text-sm">取消</button>
+                                <button type="submit" @click="showUserModal = false" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">确认添加</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= Tab 3: 数据备份 ================= -->
+            <div x-show="currentTab === 'backup'" style="display: none;" x-transition:enter.duration.300ms>
+                <h3 class="text-lg font-bold text-slate-800 mb-6 border-b pb-4">数据安全中心</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- 备份卡片 -->
+                    <div class="border border-slate-200 rounded-xl p-6 hover:shadow-md transition bg-slate-50">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-4 text-xl">
+                            <i class="fa-solid fa-cloud-arrow-down"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-800">导出数据备份</h4>
+                        <p class="text-sm text-slate-500 mt-2 mb-4">下载当前的数据库文件 (.db)。建议每周定期备份以防数据丢失。</p>
+                        <a href="/api/system/backup" target="_blank" class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
+                            立即下载 <i class="fa-solid fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+
+                    <!-- 恢复卡片 -->
+                    <div class="border border-slate-200 rounded-xl p-6 hover:shadow-md transition bg-white">
+                        <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center mb-4 text-xl">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                        </div>
+                        <h4 class="text-base font-bold text-slate-800">恢复数据</h4>
+                        <p class="text-sm text-slate-500 mt-2 mb-4">上传之前备份的 .db 文件。注意：此操作将覆盖当前所有数据！</p>
+                        
+                        <form hx-post="/api/system/restore" hx-encoding="multipart/form-data" hx-target="#restoreResult">
+                            <label class="block mb-2">
+                                <span class="sr-only">Choose file</span>
+                                <input type="file" name="file" accept=".db" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"/>
+                            </label>
+                            <button type="submit" class="mt-2 bg-white border border-slate-300 text-slate-700 px-4 py-1.5 rounded text-sm hover:bg-slate-50">
+                                开始恢复
+                            </button>
+                        </form>
+                        <div id="restoreResult" class="mt-4"></div>
+                    </div>
+                </div>
+
+                <!-- 危险区域 -->
+                <div class="mt-8 pt-8 border-t border-red-100">
+                    <h4 class="text-sm font-bold text-red-600 uppercase mb-4">Danger Zone</h4>
+                    <div class="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
+                        <div>
+                            <span class="block text-sm font-bold text-red-800">重置系统数据</span>
+                            <span class="text-xs text-red-600">删除所有商品和日志，仅保留管理员账户。</span>
+                        </div>
+                        <button onclick="Swal.fire('演示模式', '为了安全，此功能暂时禁用', 'info')" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 shadow-sm">
+                            重置数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

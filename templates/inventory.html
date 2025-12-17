@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div x-data="{ showModal: false }" class="space-y-6">
+
+    <!-- 头部操作区 -->
+    <div class="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100 gap-4">
+        <div>
+            <h2 class="text-xl font-bold text-slate-800">全球库存清单</h2>
+            <p class="text-slate-500 text-xs">支持 USD, EUR, JPY, GBP 多币种混合管理</p>
+        </div>
+        
+        <div class="flex gap-3">
+            <!-- 演示神器：一键生成数据 -->
+            <button hx-post="/api/generate-data" 
+                    hx-swap="none"
+                    class="bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-bolt"></i> 生成模拟数据 (演示用)
+            </button>
+        <!-- 在按钮区域添加 -->
+        <div x-data="{ showImport: false }">
+            <button @click="showImport = true" class="bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-file-csv"></i> 导入 CSV
+            </button>
+
+            <!-- 导入模态框 -->
+            <div x-show="showImport" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center">
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @click="showImport = false"></div>
+                <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md z-10 relative">
+                    <h3 class="text-lg font-bold mb-4">批量导入商品</h3>
+                    <p class="text-sm text-slate-500 mb-4">请上传标准格式的 CSV 文件 (SKU, Name, Currency, Cost, Qty)。</p>
+            
+                    <form hx-post="/api/import-csv" hx-encoding="multipart/form-data" hx-swap="none">
+                        <input type="file" name="file" accept=".csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                
+                        <div class="mt-6 flex justify-end gap-3">
+                            <button type="button" @click="showImport = false" class="text-slate-500 hover:text-slate-700">取消</button>
+                            <button type="submit" @click="showImport = false" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">开始导入</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+            <!-- 新增按钮 -->
+            <button @click="showModal = true" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow-lg shadow-blue-500/30 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> 新增商品
+            </button>
+        </div>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm uppercase tracking-wider">
+                        <th class="p-4 font-semibold">SKU / 名称</th>
+                        <th class="p-4 font-semibold">原币种成本</th>
+                        <th class="p-4 font-semibold">库存状态</th>
+                        <th class="p-4 font-semibold text-right">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTableBody" class="divide-y divide-slate-100">
+                    {% for p in products %}
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        <td class="p-4">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-700">{{ p.sku }}</span>
+                                <span class="text-xs text-slate-500">{{ p.name }}</span>
+                            </div>
+                        </td>
+                        <td class="p-4">
+                            <!-- 根据币种显示不同的样式 -->
+                            {% if p.currency == 'USD' %}
+                                <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-xs font-bold">USD</span>
+                            {% elif p.currency == 'EUR' %}
+                                <span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-bold">EUR</span>
+                            {% elif p.currency == 'JPY' %}
+                                <span class="bg-rose-100 text-rose-800 px-2 py-1 rounded text-xs font-bold">JPY</span>
+                            {% elif p.currency == 'GBP' %}
+                                <span class="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-bold">GBP</span>
+                            {% endif %}
+                            <span class="ml-2 font-mono text-slate-600">{{ "{:,.2f}".format(p.cost_price) }}</span>
+                        </td>
+                        <td class="p-4">
+                            {% if p.quantity < p.safe_stock %}
+                                <span class="text-red-600 font-bold text-sm">⚠ 缺货 ({{ p.quantity }})</span>
+                            {% else %}
+                                <span class="text-green-600 text-sm">✔ 充足 ({{ p.quantity }})</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 text-right">
+                            <button hx-delete="/products/{{ p.id }}" 
+                                    hx-confirm="确定删除？" 
+                                    hx-target="closest tr" 
+                                    hx-swap="outerHTML"
+                                    class="text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if not products %}
+        <div class="p-10 text-center text-slate-400">
+            <i class="fa-solid fa-box-open text-4xl mb-3 opacity-50"></i>
+            <p>暂无商品数据，请点击上方“⚡ 生成模拟数据”按钮。</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 模态框 (Modal) - 之前可能缺失的部分 -->
+    <div x-show="showModal" style="display: none;" 
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        
+        <!-- 背景遮罩 -->
+        <div x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" 
+             @click="showModal = false"></div>
+
+        <!-- 模态框内容 -->
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <h3 class="text-xl font-bold leading-6 text-gray-900 mb-4" id="modal-title">
+                        <i class="fa-solid fa-pen-to-square text-blue-500 mr-2"></i>添加新商品
+                    </h3>
+                    
+                    <!-- 注意：这里增加了 JPY 和 GBP 的选项 -->
+                    <form id="addProductForm" hx-post="/products/add" hx-target="#inventoryTableBody" hx-swap="beforeend">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2">
+                                <label class="block text-sm font-medium text-gray-700">商品名称</label>
+                                <input type="text" name="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">SKU</label>
+                                <input type="text" name="sku" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">币种</label>
+                                <select name="currency" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2 bg-white">
+                                    <option value="USD">USD (美元)</option>
+                                    <option value="EUR">EUR (欧元)</option>
+                                    <option value="JPY">JPY (日元)</option>
+                                    <option value="GBP">GBP (英镑)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">进货单价</label>
+                                <input type="number" step="0.01" name="cost_price" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">初始数量</label>
+                                <input type="number" name="quantity" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 flex flex-row-reverse gap-2">
+                            <button type="submit" @click="setTimeout(() => showModal = false, 100)" class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:w-auto">保存商品</button>
+                            <button type="button" @click="showModal = false" class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:w-auto">取消</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

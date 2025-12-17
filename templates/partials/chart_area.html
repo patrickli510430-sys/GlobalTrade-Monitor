@@ -1,0 +1,62 @@
+<div id="dynamicAreaChart" class="w-full h-[380px]"></div>
+
+<script>
+    var dom = document.getElementById('dynamicAreaChart');
+    var myChart = echarts.init(dom);
+    
+    var isLine = '{{ chart_type }}' === 'line';
+    
+    var option = {
+        // 移除默认标题，改用 HTML 的 Header
+        grid: { left: '2%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
+        tooltip: { 
+            trigger: 'axis',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderColor: '#f1f5f9',
+            borderWidth: 1,
+            textStyle: { color: '#334155' },
+            extraCssText: 'box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 8px;'
+        },
+        xAxis: { 
+            type: 'category', 
+            boundaryGap: !isLine, // 折线图顶格，柱状图留空
+            data: {{ names | safe }},
+            axisLine: { lineStyle: { color: '#cbd5e1' } },
+            axisLabel: { color: '#64748b', interval: 0, rotate: 15 } // 防止文字重叠
+        },
+        yAxis: { 
+            type: 'value', 
+            splitLine: { lineStyle: { type: 'dashed', color: '#f1f5f9' } },
+            axisLabel: { color: '#94a3b8' }
+        },
+        series: [{
+            name: '库存量',
+            data: {{ values | safe }},
+            type: '{{ chart_type }}',
+            smooth: true,
+            symbol: isLine ? 'circle' : 'none',
+            symbolSize: 8,
+            itemStyle: { 
+                color: '{{ color }}',
+                borderRadius: isLine ? 0 : [4, 4, 0, 0] 
+            },
+            // 只有折线图才显示面积渐变
+            areaStyle: isLine ? {
+                opacity: 0.2,
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: '{{ color }}' },
+                    { offset: 1, color: 'rgba(255, 255, 255, 0)' }
+                ])
+            } : null,
+            // 只有柱状图才显示标签
+            label: {
+                show: !isLine,
+                position: 'top',
+                color: '{{ color }}',
+                fontWeight: 'bold'
+            }
+        }]
+    };
+    myChart.setOption(option);
+    window.addEventListener('resize', function() { myChart.resize(); });
+</script>

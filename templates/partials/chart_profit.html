@@ -1,0 +1,66 @@
+<div id="profitChartDom" class="w-full h-[350px]"></div>
+
+<script>
+    var pDom = document.getElementById('profitChartDom');
+    var existingP = echarts.getInstanceByDom(pDom);
+    if (existingP) { existingP.dispose(); }
+
+    var pChart = echarts.init(pDom);
+    var pOption = {
+        tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+        legend: { data: ['预估利润率', '汇率波动指数'], bottom: 0 },
+        grid: { left: '3%', right: '3%', bottom: '10%', top: '15%', containLabel: true },
+        xAxis: { 
+            type: 'category', 
+            data: {{ dates | safe }},
+            axisLine: { lineStyle: { color: '#94a3b8' } }
+        },
+        yAxis: [
+            {
+                type: 'value',
+                name: '利润率 (%)',
+                position: 'left',
+                axisLabel: { formatter: '{value} %', color: '#10b981' },
+                splitLine: { show: true, lineStyle: { type: 'dashed' } }
+            },
+            {
+                type: 'value',
+                name: '汇率指数',
+                position: 'right',
+                min: 'dataMin',
+                max: 'dataMax',
+                axisLabel: { formatter: '{value}', color: '#64748b' },
+                splitLine: { show: false }
+            }
+        ],
+        series: [
+            {
+                name: '预估利润率',
+                type: 'line',
+                smooth: true,
+                yAxisIndex: 0,
+                data: {{ profit_trend | safe }},
+                itemStyle: { color: '#10b981' },
+                areaStyle: {
+                    opacity: 0.1,
+                    color: '#10b981'
+                },
+                markPoint: {
+                    data: [{ type: 'max', name: 'Max' }, { type: 'min', name: 'Min' }]
+                }
+            },
+            {
+                name: '汇率波动指数',
+                type: 'line',
+                smooth: true,
+                yAxisIndex: 1,
+                data: {{ rate_trend | safe }},
+                lineStyle: { type: 'dashed', width: 2, color: '#94a3b8' },
+                itemStyle: { color: '#94a3b8' },
+                symbol: 'none'
+            }
+        ]
+    };
+    pChart.setOption(pOption);
+    window.addEventListener('resize', function() { pChart.resize(); });
+</script>

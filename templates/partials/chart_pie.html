@@ -1,0 +1,43 @@
+<div id="pieChartDom" class="w-full h-[380px]"></div>
+
+<script>
+    var pieDom = document.getElementById('pieChartDom');
+    
+    // 销毁旧实例防止内存泄漏
+    var existingPie = echarts.getInstanceByDom(pieDom);
+    if (existingPie) { existingPie.dispose(); }
+
+    var pieChart = echarts.init(pieDom);
+    var option = {
+        tooltip: { trigger: 'item', formatter: '<b>{b}</b><br/>{c} CNY ({d}%)' },
+        legend: { bottom: '0%', left: 'center', icon: 'circle' },
+        color: ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#94a3b8'], // 自定义配色
+        series: [{
+            name: '资产分布',
+            type: 'pie',
+            radius: ['45%', '70%'], // 环形
+            center: ['50%', '45%'],
+            itemStyle: {
+                borderRadius: 8,
+                borderColor: '#fff',
+                borderWidth: 2
+            },
+            label: { show: false },
+            emphasis: {
+                label: { show: true, fontSize: 14, fontWeight: 'bold' },
+                itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.2)' }
+            },
+            data: [
+                { value: {{ asset_map['USD']|round(2) }}, name: 'USD 资产' },
+                { value: {{ asset_map['EUR']|round(2) }}, name: 'EUR 资产' },
+                { value: {{ asset_map['JPY']|round(2) }}, name: 'JPY 资产' },
+                { value: {{ asset_map['GBP']|round(2) }}, name: 'GBP 资产' },
+                { value: {{ asset_map['Other']|round(2) }}, name: '其他' }
+            ].filter(item => item.value > 0) // 过滤掉 0 的数据，避免图表难看
+        }]
+    };
+    pieChart.setOption(option);
+    
+    // 自动适配屏幕
+    window.addEventListener('resize', function() { pieChart.resize(); });
+</script>

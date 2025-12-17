@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+sqlmodel
+jinja2
+httpx
+python-multipart
+email_validator

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-[1600px] mx-auto space-y-8">
+    
+    <!-- 1. 顶部 KPI 区域 -->
+    <div class="space-y-4">
+        <div class="flex justify-between items-end px-1">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800 tracking-tight">运营概览 Dashboard</h2>
+                <p class="text-sm text-slate-500 mt-1">实时汇率接口连接状态: <span class="text-green-500 font-bold">● 在线</span></p>
+            </div>
+            <div class="text-xs text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm">
+                上次更新: <span id="lastUpdated">刚刚</span>
+            </div>
+        </div>
+
+        <!-- KPI 容器：只加载 stats_cards.html -->
+        <div x-data="{ showRates: false }"
+             hx-get="/api/dashboard-stats" 
+             hx-trigger="load, every 30s" 
+             hx-swap="innerHTML"
+             class="min-h-[140px]"> <!-- 给一个最小高度防止抖动 -->
+
+             <!-- 骨架屏 -->
+             <div class="animate-pulse grid grid-cols-1 md:grid-cols-5 gap-4">
+                 <div class="md:col-span-2 h-36 bg-slate-200 rounded-xl"></div>
+                 <div class="h-36 bg-slate-200 rounded-xl"></div>
+                 <div class="h-36 bg-slate-200 rounded-xl"></div>
+                 <div class="h-36 bg-slate-200 rounded-xl"></div>
+             </div>
+        </div>
+    </div>
+
+    <!-- 2. 核心图表区域 (左右布局) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左侧：主图表 (库存深度) 占 8/12 -->
+        <div class="lg:col-span-8 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col overflow-hidden">
+             <!-- Header 保持不变 ... -->
+             <div class="px-6 py-5 border-b border-slate-50 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50">
+                <div>
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-blue-500"></i>
+                        库存深度透视
+                    </h3>
+                </div>
+                <!-- 下拉框保持不变 ... -->
+                 <div class="relative group">
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-3 text-slate-400 text-xs pointer-events-none group-hover:text-blue-500 transition-colors"></i>
+                    <select onchange="updateMainChart(this.value)" 
+                            class="appearance-none bg-white border border-slate-200 pl-4 pr-10 py-2 rounded-lg text-sm text-slate-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 hover:border-blue-300 transition-all cursor-pointer shadow-sm">
+                        <option value="all">📊 全局 Top 15 商品 (默认)</option>
+                        <optgroup label="查看单品历史趋势">
+                            {% for p in products %}
+                                <option value="{{ p.id }}">{{ p.sku }} - {{ p.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Chart Body -->
+            <div id="mainChartContainer" 
+                 class="p-6 flex-1 min-h-[400px]"
+                 hx-get="/api/chart/product/all" 
+                 hx-trigger="load">
+                 <!-- Loading State -->
+                 <div class="h-full w-full flex flex-col items-center justify-center text-slate-300 gap-3">
+                     <i class="fa-solid fa-circle-notch fa-spin text-3xl"></i>
+                 </div>
+            </div>
+        </div>
+
+        <!-- 右侧：利润分析 (新功能) 占 4/12 -->
+        <div class="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col"
+             x-data="{ currentTab: 'profit' }">
+            
+            <!-- Tab Header -->
+            <div class="px-6 py-4 border-b border-slate-50 flex justify-between items-center">
+                <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                    <i class="fa-solid" :class="currentTab === 'profit' ? 'fa-chart-line text-emerald-500' : 'fa-chart-pie text-indigo-500'"></i>
+                    <span x-text="currentTab === 'profit' ? '汇率影响与利润' : '全球资金分布'"></span>
+                </h3>
+
+                <!-- Tab Switcher (Pills) -->
+                <div class="flex bg-slate-100 p-1 rounded-lg">
+                    <button @click="currentTab = 'profit'; setTimeout(() => window.dispatchEvent(new Event('resize')), 50)"
+                            class="px-3 py-1 text-xs font-medium rounded-md transition-all"
+                            :class="currentTab === 'profit' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                        利润
+                    </button>
+                    <button @click="currentTab = 'pie'; setTimeout(() => window.dispatchEvent(new Event('resize')), 50)"
+                            class="px-3 py-1 text-xs font-medium rounded-md transition-all"
+                            :class="currentTab === 'pie' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'">
+                        资金
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Content Area 1: 利润分析 -->
+            <div x-show="currentTab === 'profit'" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-x-4"
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 class="flex-1 min-h-[400px] relative">
+                 
+                 <div id="profitChartContainer" 
+                      class="absolute inset-0 p-6"
+                      hx-get="/api/chart/profit" 
+                      hx-trigger="load">
+                      <div class="animate-pulse w-full h-full bg-slate-50 rounded"></div>
+                 </div>
+                 
+                 <div class="absolute bottom-0 left-0 right-0 px-6 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 flex justify-between">
+                    <span>模拟说明:</span>
+                    <span>汇率波动 1% ≈ 利润反向 0.8%</span>
+                </div>
+            </div>
+
+            <!-- Content Area 2: 饼图分布 -->
+            <div x-show="currentTab === 'pie'" style="display: none;"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 -translate-x-4"
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 class="flex-1 min-h-[400px] relative">
+                 
+                 <div id="pieChartContainer" 
+                      class="absolute inset-0 p-6 flex items-center justify-center"
+                      hx-get="/api/chart/pie" 
+                      hx-trigger="load"> <!-- 注意：这里不需要 every 30s，切换过来再加载也不迟，或者加上 -->
+                      <div class="animate-pulse w-32 h-32 rounded-full bg-slate-100"></div>
+                 </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    // 简单的 JS 更新时间显示
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('lastUpdated').innerText = now.toLocaleTimeString();
+    }, 30000);
+
+    function updateMainChart(val) {
+        // 给 Chart 容器加一个透明度过渡效果
+        let container = document.getElementById('mainChartContainer');
+        container.style.opacity = '0.5';
+        
+        htmx.ajax('GET', '/api/chart/product/' + val, {
+            target: '#mainChartContainer',
+            swap: 'innerHTML'
+        }).then(() => {
+            container.style.opacity = '1';
+        });
+    }
+</script>
+{% endblock %}

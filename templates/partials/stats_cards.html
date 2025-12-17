@@ -1,0 +1,111 @@
+<div class="flex flex-col lg:flex-row gap-6 h-full items-stretch">
+    
+    <!-- Left: 全球总资产 -->
+    <div class="flex-1 bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-64 h-64 bg-blue-600 rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-pulse"></div>
+        
+        <div class="relative z-10 flex flex-col justify-between h-full">
+            <div>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
+                        <i class="fa-solid fa-earth-americas text-blue-300"></i>
+                    </div>
+                    <span class="text-sm font-bold text-slate-300 tracking-widest uppercase">Global Inventory Value</span>
+                </div>
+                
+                <div class="flex items-baseline gap-2">
+                    <span class="text-2xl font-medium text-slate-400">¥</span>
+                    <h1 class="text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+                        {{ "{:,.2f}".format(total_value) }}
+                    </h1>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex items-center gap-4 text-xs text-slate-400 border-t border-white/10 pt-4">
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    实时汇率折算
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: 智能汇率窗口 (Bug 修复版) -->
+    <!-- 
+         🔴 关键修复：手动构建 JS 对象 
+         rates: { 'USD': 7.05, 'EUR': 8.12, ... }
+    -->
+    <div x-data="{ 
+            viewMode: 'mini', 
+            selectedCurrency: 'USD',
+            rates: { 
+                {% for code, rate in rates.items() %}
+                    '{{ code }}': {{ rate }},
+                {% endfor %}
+            } 
+         }" 
+         class="lg:w-[380px] bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col transition-all duration-300 relative overflow-hidden">
+        
+        <!-- Header -->
+        <div class="px-5 py-3 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+            <span class="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                <i class="fa-solid fa-money-bill-transfer"></i> 汇率监控
+            </span>
+            <button @click="viewMode = (viewMode === 'mini' ? 'grid' : 'mini')" 
+                    class="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                <span x-text="viewMode === 'mini' ? '展开全部' : '收起'"></span>
+                <i class="fa-solid ml-1" :class="viewMode === 'mini' ? 'fa-expand' : 'fa-compress'"></i>
+            </button>
+        </div>
+
+        <!-- Mode A: Mini View -->
+        <div x-show="viewMode === 'mini'" class="flex-1 p-6 flex flex-col justify-center relative">
+            <!-- Arrows -->
+            <div class="absolute inset-y-0 left-2 flex items-center">
+                <button class="p-2 text-slate-300 hover:text-blue-500" 
+                        @click="const keys = Object.keys(rates); const idx = keys.indexOf(selectedCurrency); selectedCurrency = keys[(idx - 1 + keys.length) % keys.length]">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+            </div>
+            <div class="absolute inset-y-0 right-2 flex items-center">
+                <button class="p-2 text-slate-300 hover:text-blue-500" 
+                         @click="const keys = Object.keys(rates); const idx = keys.indexOf(selectedCurrency); selectedCurrency = keys[(idx + 1) % keys.length]">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <div class="text-center">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 text-xl mb-3 shadow-inner">
+                    <i class="fa-solid" :class="{
+                           'fa-dollar-sign': selectedCurrency === 'USD',
+                           'fa-euro-sign': selectedCurrency === 'EUR',
+                           'fa-yen-sign': selectedCurrency === 'JPY',
+                           'fa-sterling-sign': selectedCurrency === 'GBP'
+                       }"></i>
+                </div>
+                <!-- 防止 undefined 报错，加个判断 -->
+                <h2 class="text-4xl font-bold text-slate-800 tracking-tight" x-text="rates[selectedCurrency] || '-'"></h2>
+                <p class="text-sm text-slate-400 mt-2 font-medium">
+                    100 <span x-text="selectedCurrency"></span> ≈ 
+                    <span x-text="rates[selectedCurrency] ? (rates[selectedCurrency] * 100).toFixed(1) : '-'" class="text-slate-600 font-bold"></span> CNY
+                </p>
+            </div>
+        </div>
+
+        <!-- Mode B: Grid View -->
+        <div x-show="viewMode === 'grid'" style="display: none;" class="flex-1 p-4 overflow-y-auto">
+            <div class="grid grid-cols-2 gap-3">
+                <template x-for="(rate, code) in rates" :key="code">
+                    <div @click="selectedCurrency = code; viewMode = 'mini'" 
+                         class="p-3 rounded-lg border border-slate-100 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all text-center group">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase" x-text="code"></div>
+                        <div class="text-lg font-bold text-slate-700 group-hover:text-blue-600" x-text="rate"></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,8 @@
+# 忽略虚拟环境
+venv/
+.env
+__pycache__/
+*.pyc
+
+# 忽略 Mac 系统垃圾文件
+.DS_Store
