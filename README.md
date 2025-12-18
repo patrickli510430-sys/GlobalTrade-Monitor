@@ -1,8 +1,7 @@
 
 
 # 🌍 GlobalTrade Monitor | 跨境电商智能库存与汇率监控看板
-[![English](https://img.shields.io/badge/Language-English-blue.svg)](#english)
-[![中文](https://img.shields.io/badge/Language-中文-red.svg)](#中文)
+[![English](https://img.shields.io/badge/English-README-blue.svg)](README_EN.md)
 ---
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688.svg)
