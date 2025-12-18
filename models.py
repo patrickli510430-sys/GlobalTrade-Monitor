@@ -3,7 +3,7 @@
 -------------------------------------------------
    Project:   GlobalTrade Monitor
    File:      main.py
-   Author:    [Wenxuan Li/Patrickli]
+   Author:    [Wenxuan Li]
    Date:      2025-12-18
    Description:
       Main entry point for the FastAPI application.

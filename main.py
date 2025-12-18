@@ -3,7 +3,7 @@
 -------------------------------------------------
    Project:   GlobalTrade Monitor
    File:      main.py
-   Author:    [Wenxuan/Patrickli]
+   Author:    [Wenxuan Li]
    Date:      2025-12-18
    Description:
       Main entry point for the FastAPI application.
@@ -502,10 +502,19 @@ async def get_profit_chart(request: Request):
 # 7. 功能与业务逻辑 API (Functional APIs)
 # ==============================================================================
 @app.get("/api/set-lang/{lang_code}")
-async def set_language(lang_code: str):
-    """切换语言并设置 Cookie"""
-    response = RedirectResponse(url="/", status_code=303)
+async def set_language(lang_code: str, request: Request):
+    """
+    设置语言 Cookie 并重定向回当前页面 (HTMX 会拦截这个重定向并进行局部刷新)
+    """
+    # 1. 获取用户当前所在的 URL (Referer)，如果获取不到则跳回首页
+    referer_url = request.headers.get("referer", "/")
+    
+    # 2. 返回 303 重定向 (HTMX 会自动跟随这个重定向去获取新语言的 HTML)
+    response = RedirectResponse(url=referer_url, status_code=303)
+    
+    # 3. 设置 Cookie
     response.set_cookie(key="app_lang", value=lang_code)
+    
     return response
 
 @app.post("/api/ai/ask")
