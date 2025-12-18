@@ -1,10 +1,5 @@
-Here is the English version of your `README.md`. I have translated the content, including the text inside the Mermaid diagrams and the directory structure comments, to ensure it looks professional for an international audience.
-
-You can save this as `README_EN.md` or replace your current `README.md`.
-
----
-
 # 🌍 GlobalTrade Monitor | Cross-Border E-commerce Smart Inventory & Exchange Rate Dashboard
+[![English](https://img.shields.io/badge/English-README-blue.svg)](README_EN.md)
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688.svg)
