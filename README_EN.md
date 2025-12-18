@@ -1,5 +1,5 @@
 # 🌍 GlobalTrade Monitor | Cross-Border E-commerce Smart Inventory & Exchange Rate Dashboard
-[![English](https://img.shields.io/badge/English-README-blue.svg)](README_EN.md)
+[![中文](https://img.shields.io/badge/中文-README-red.svg)](README.md)
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688.svg)
